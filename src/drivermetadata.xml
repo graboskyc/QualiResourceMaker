@@ -1,0 +1,20 @@
+<Driver Description="Describe the purpose of your CloudShell shell" MainClass="driver.ResourcemakerDriver" Name="ResourcemakerDriver" Version="1.0.23">
+    <Layout>
+        <Category Name="Commands">
+            <Command Description="Just your regular example command" DisplayName="Run Resource Maker" Name="RunResourceMaker" EnableCancellation="true"  />
+            <!--
+            <Command Description="Just your regular example command with parameters" DisplayName="Command With Params"
+                     Name="example_function_with_params" >
+                <Parameters>
+                    <Parameter Name="user_param1" Type="String" Mandatory = "True" DefaultValue="Somem default"
+                               DisplayName="String Param" Description="Some example string input"/>
+                    <Parameter Name="user_param2" Type="Lookup" Mandatory = "True" AllowedValues="Yes,No"
+                               DefaultValue="Yes" DisplayName="Lookup Param" Description="Some example lookup input"/>
+                </Parameters>
+            </Command>
+            -->
+        </Category>
+        
+
+    </Layout>
+</Driver>

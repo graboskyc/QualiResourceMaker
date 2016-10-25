@@ -1,0 +1,3 @@
+cloudshell-shell-core
+tornado
+cloudshell-automation-api

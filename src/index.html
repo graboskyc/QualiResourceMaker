@@ -1,0 +1,188 @@
+{% autoescape None %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{{ static_url("bootstrap.min.css") }}" rel="stylesheet">
+  <style type="text/css">
+    body {
+      padding-top: 60px;
+      padding-bottom: 40px;
+    }
+    
+    .marketing {
+      margin-top: 50px;
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+    
+    .marketing div {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .marketing h2 {
+      font-weight: normal;
+    }
+    
+    .marketing h2 a {
+      color: #000;
+    }
+    
+    .marketing div p {
+      margin-right: 10px;
+      margin-left: 10px;
+    }
+    
+    .marketing h4 {
+      text-align: center;
+    }
+    
+    .jumbotron {
+      margin-bottom: 20px;
+      background-image: url('{{ static_url("Jumbotron.jpg") }}');
+      background-position: 10% 50%;
+      background-size: cover;
+      background-repeat: no-repeat;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: black 0.3em 0.3em 0.3em;
+    }
+    .jumbotron p a {
+      color: #fff;
+    }
+  </style>
+  
+</head>
+
+<body>
+  <div class="container">
+    <div class="jumbotron">
+      <h1 id="grab_heroheading">Resource Maker</h1>
+    </div>
+
+    <div class="container marketing">
+
+        <div class="row">
+          <div class="col-md-2">
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="resName">Resource Name</label>
+              <input type="text" class="form-control" id="txt_resName" placeholder="Resource Name">
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="resName">Address</label>
+              <input type="text" class="form-control" id="txt_resAddres" placeholder="Address">
+            </div>
+          </div>
+
+          <div class="col-md-2">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-2">
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="resName">Family Name</label>
+              <select class="form-control" id="ddl_resFamName">
+                {% for fam in possibleFamily %}
+                  <option value="{{ fam }}">{{ fam }}</option>
+                {% end %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="resName">Model Name</label>
+              <select class="form-control" id="ddl_resModName">
+                {% for mod in possibleModel %}
+                  <option value="{{ mod }}">{{ mod }}</option>
+                {% end %}
+              </select>
+            </div>
+          </div>
+          
+          <div class="col-md-2">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-2">
+          </div>
+          
+          <div class="col-md-8">
+
+            <div class="form-group">
+              <label for="resName">Description</label>
+              <input type="text" class="form-control" id="txt_resDescription" placeholder="Description">
+            </div>
+
+            <div class="form-group">
+              <button class="btn btn-success" id="btn_createRes">Create</button>
+            </div>
+
+          </div>
+          
+          <div class="col-md-2">
+          </div>
+        </div>
+
+         <div class="row">
+           <div class="col-md-2"></div>
+           <div class="col-md-8">
+             <div class="alert alert-success" role="alert" id="div_success"></div>
+             <div class="alert alert-danger" role="alert" id="div_fail"></div>
+           </div>
+           <div class="col-md-2"></div>
+         </div>
+
+      
+      
+    </div>
+  </div>
+      <script src="{{ static_url("jquery-1.11.3.min.js") }}"></script>
+
+      <script type="text/javascript">
+        var connection = new WebSocket('ws://{{ wsip }}');
+        connection.onmessage = function(e){
+          var server_message = e.data;
+          //console.log("RECV: " + server_message);
+
+          $(".alert").hide();
+          
+          if (server_message.indexOf("FAILED") !== -1) {
+            //alert(server_message);
+            $('#div_fail').html(server_message);
+            $('#div_fail').show();
+          }
+          else {
+            $('#div_success').html(server_message);
+            $('#div_success').show();
+          }
+        }
+      </script>
+
+      <script type="text/javascript">
+        $(function() {
+          $('#btn_createRes').click(function() { 
+            var str = 'CREATE/' + $("#txt_resName").val() + "/"+ $("#ddl_resFamName").val() + "/"+ $("#ddl_resModName").val() + "/"+ $("#txt_resAddres").val() + "/"+ $("#txt_resDescription").val();
+            //console.log("SENDING: " + str);
+            connection.send(str);
+          });
+        });
+      </script>
+</body>
+
+</html>

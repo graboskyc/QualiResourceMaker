@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TopologyInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Details Name="QualiFieldResourceMaker" Alias="QualiFieldResourceMaker" Public="false" ImageName="QualiFieldResourceMaker.png" DefaultDuration="120">
+    <Categories />
+    <Diagram Zoom="1" />
+  </Details>
+  <Services>
+    <Service PositionX="319" PositionY="275" Alias="ResourceMaker" ServiceName="ResourceMaker" />
+  </Services>
+  <Apps />
+</TopologyInfo>

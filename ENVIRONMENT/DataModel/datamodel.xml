@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DataModelInfo xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.qualisystems.com/ResourceManagement/DataModelSchema.xsd">
+  <Attributes />
+  <ResourceFamilies>
+    <ResourceFamily Name="Quali Field" Description="" IsAdminOnly="true" IsService="true" ServiceType="Regular">
+      <AttachedAttributes />
+      <AttributeValues />
+      <Models>
+        <ResourceModel Name="ResourceMaker" ImagePath="ResourceMaker_Model.png" Description="" SupportsConcurrentCommands="false">
+          <AttachedAttributes />
+          <AttributeValues />
+          <ParentModels />
+          <Drivers>
+            <DriverName>ResourceMaker</DriverName>
+          </Drivers>
+          <Scripts />
+        </ResourceModel>
+      </Models>
+      <Categories>
+        <Category>Quali Field</Category>
+      </Categories>
+    </ResourceFamily>
+  </ResourceFamilies>
+  <DriverDescriptors>
+    <DriverDescriptor Name="ResourceMaker" Description="Describe the purpose of your CloudShell shell" DriverType="PythonDriver" />
+  </DriverDescriptors>
+  <ScriptDescriptors />
+</DataModelInfo>
