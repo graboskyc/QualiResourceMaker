@@ -12,6 +12,7 @@ This is more manual work than [loading from a spreadsheet](https://github.com/Qu
 * this is a proof of concept and a security risk so use at your own risk!
 
 # Using this repo
+## From CloudShell
 * First zip the src directory and rename the zip to ResourceMaker.zip
 * Place that into ENVIRONMENT/Resource Drivers - Python folder
 * Zip the ENVIRONMENT folder
@@ -19,3 +20,10 @@ This is more manual work than [loading from a spreadsheet](https://github.com/Qu
 * Reserve the environment and run the `Run Resource Maker` command on the service
 * click the link in the output window to get to the temporary service
 * When complete, terminate the command on the service in the portal!
+
+## From CLI
+* Extract the sec directory somewhere
+* Use the Exe Server Python CLI or another CLI with the requirements.txt installed to run the driver.py: `C:\Users\chris.g>"c:\Program Files (x86)\QualiSystems\TestShell\ExecutionServer\python\2.7.10\python.exe" Desktop\resourcemaker\src\driver.py`
+
+# Sample Screenshot
+![](Docs/WebSS.png)
