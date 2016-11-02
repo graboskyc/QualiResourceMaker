@@ -22,7 +22,7 @@ This is more manual work than [loading from a spreadsheet](https://github.com/Qu
 * When complete, terminate the command on the service in the portal!
 
 ## From CLI
-* Extract the sec directory somewhere
+* Extract the `src` directory somewhere
 * Use the Exe Server Python CLI or another CLI with the requirements.txt installed to run the driver.py: `C:\Users\chris.g>"c:\Program Files (x86)\QualiSystems\TestShell\ExecutionServer\python\2.7.10\python.exe" Desktop\resourcemaker\src\driver.py`
 
 # Sample Screenshot
