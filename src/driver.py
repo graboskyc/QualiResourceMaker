@@ -1,6 +1,9 @@
 from cloudshell.shell.core.resource_driver_interface import ResourceDriverInterface
 from cloudshell.shell.core.driver_context import InitCommandContext, ResourceCommandContext, AutoLoadCommandContext, AutoLoadAttribute, AutoLoadResource, AutoLoadDetails
 from cloudshell.api.cloudshell_api import CloudShellAPISession
+from cloudshell.api.cloudshell_api import ResourceAttributesUpdateRequest
+from cloudshell.api.cloudshell_api import AttributeNamesValues
+from cloudshell.api.cloudshell_api import AttributeNameValue
 import cloudshell.helpers.scripts.cloudshell_scripts_helpers as helpers
 import tornado.ioloop
 import tornado.web
@@ -10,6 +13,7 @@ import json
 import os
 import socket
 import xml.etree.ElementTree as ET
+import sys
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -19,11 +23,14 @@ class MainHandler(tornado.web.RequestHandler):
         ns = {"qs":"http://schemas.qualisystems.com/ResourceManagement/ExportImportConfigurationSchema.xsd"}
         famList = []
         modList = []
+        attList = []
         for f in root.findall(".//qs:ResourceFamily", ns):
             famList.append(f.get("Name"))
         for m in root.findall(".//qs:ResourceModel", ns):
             modList.append(m.get("Name"))
-        self.render("index.html", title="Resource Maker", wsip=socket.gethostbyname(socket.gethostname())+":6661", possibleFamily=famList, possibleModel=modList)
+        for a in root.findall(".//qs:AttributeInfo", ns):
+            attList.append(a.get("Name"))
+        self.render("index.html", title="Resource Maker", wsip="6661", possibleFamily=famList, possibleModel=modList, possibleAtts=attList)
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):  
     def open(self):
@@ -31,28 +38,46 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.write_message("CONN")
 
     def on_message(self, message):
-        if message.startswith("CREATE"):
-            userPacket = message.split("/")
+        obj = json.loads(message)
+        if obj["TASK"] == "CREATE":
+            resName = obj["NAME"]
+            famName = obj["FAM"]
+            modName = obj["MOD"]
+            addr = obj["ADDR"]
+            desc = obj["DESC"]
 
-            if (len(userPacket) == 6):
-                resName = userPacket[1]
-                famName = userPacket[2]
-                modName = userPacket[3]
-                addr = userPacket[4]
-                desc = userPacket[5]
-
-                if (len(resName) > 0):
-                    try:
-                        csapi = CloudShellAPISession("localhost","admin","admin","Global")
-                        csapi.CreateResource(famName, modName, resName, addr, "", "", desc)
-                        self.write_message("CREATED/"+message)
-                    except:
-                        self.write_message("FAILED/EXCEPTION")
-                        pass
-                else:
-                    self.write_message("FAILED/CREATENAME")
+            if (len(resName) > 0):
+                try:
+                    csapi = CloudShellAPISession("localhost","admin","admin","Global")
+                    csapi.CreateResource(famName, modName, resName, addr, "", "", desc)
+                    self.write_message("CREATED/"+message)
+                except:
+                    e = sys.exc_info()[0]
+                    self.write_message("FAILED/EXCEPTION/"+str(e))
+                    pass
             else:
-                self.write_message("FAILED/CREATEARGS")
+                self.write_message("FAILED/CREATENAME")
+        elif obj["TASK"] == "ATTR":
+            resName = obj["NAME"]
+
+            if (len(resName) > 0):
+                try:
+                    csapi = CloudShellAPISession("localhost","admin","admin","Global")
+                    allRaud = []
+                    
+                    for n,v in zip(obj["ATTS"], obj["VALS"]):
+                        anv = AttributeNameValue(n,v)
+                        anvs = AttributeNamesValues(anv)
+                        raud = ResourceAttributesUpdateRequest(resName, anvs)
+                        allRaud.append(raud)
+                    csapi.SetAttributesValues(allRaud)
+                    self.write_message("ATTR/"+message)
+                except:
+                    e = sys.exc_info()[0]
+                    self.write_message("FAILED/EXCEPTION/"+str(e))
+                    pass
+            else:
+                self.write_message("FAILED/ATTRNAME")
         else:
             self.write_message("FAILED/UNKNOWN")
 
@@ -62,6 +87,25 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     
     def check_origin(self, origin):
 		return True
+
+class Runner():
+    def __init__(self, printOutput=False):
+        appWSHPort = 6661
+        appMainPort = 6660
+
+        # Start the websocket hander
+        appWSH = tornado.web.Application([(r"/", WebSocketHandler),])
+        appWSH.listen(appWSHPort)
+
+        if printOutput:
+            csapi = CloudShellAPISession("localhost","admin","admin","Global")
+            csapi.WriteMessageToReservationOutput(context.reservation.reservation_id, "Head to: http://" +socket.gethostbyname(socket.gethostname())+":"+str(appMainPort))
+
+        # start main app
+        settings = {"static_path": os.path.join(os.path.dirname(__file__), "static")}
+        appMain = tornado.web.Application([(r"/", MainHandler),], **settings)
+        appMain.listen(appMainPort)
+        tornado.ioloop.IOLoop.current().start()
 
 class ResourcemakerDriver (ResourceDriverInterface):
 
@@ -81,21 +125,7 @@ class ResourcemakerDriver (ResourceDriverInterface):
 
     def RunResourceMaker(self, context, cancellation_context):
 
-        appWSHPort = 6661
-        appMainPort = 6660
-
-        # Start the websocket hander
-        appWSH = tornado.web.Application([(r"/", WebSocketHandler),])
-        appWSH.listen(appWSHPort)
-
-        csapi = CloudShellAPISession("localhost","admin","admin","Global")
-        csapi.WriteMessageToReservationOutput(context.reservation.reservation_id, "Head to: http://" +socket.gethostbyname(socket.gethostname())+":"+str(appMainPort))
-
-        # start main app
-        settings = {"static_path": os.path.join(os.path.dirname(__file__), "static")}
-        appMain = tornado.web.Application([(r"/", MainHandler),], **settings)
-        appMain.listen(appMainPort)
-        tornado.ioloop.IOLoop.current().start()
+        r = Runner(True)
 
         pass
 
@@ -115,3 +145,6 @@ class ResourcemakerDriver (ResourceDriverInterface):
         This is a good place to close any open sessions, finish writing to log files
         """
         pass
+
+if __name__ == "__main__":
+    r = Runner()

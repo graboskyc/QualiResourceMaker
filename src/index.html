@@ -64,7 +64,7 @@
       <h1 id="grab_heroheading">Resource Maker</h1>
     </div>
 
-    <div class="container marketing">
+    <div class="container marketing" >
 
         <div class="row">
           <div class="col-md-2">
@@ -123,14 +123,14 @@
           </div>
           
           <div class="col-md-8">
-
-            <div class="form-group">
+            <div class="form-group" style="display:none;">
               <label for="resName">Description</label>
               <input type="text" class="form-control" id="txt_resDescription" placeholder="Description">
             </div>
 
             <div class="form-group">
-              <button class="btn btn-success" id="btn_createRes">Create</button>
+              <button class="btn btn-success" id="btn_createRes">Create Resource</button>
+              <button class="btn btn-danger" id="btn_createClear">Clear</button>
             </div>
 
           </div>
@@ -148,40 +148,104 @@
            <div class="col-md-2"></div>
          </div>
 
-      
+        <div class="row" id="dupRow">
+          <div class="col-md-2">
+          </div>
+          
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="ddl_attName">Att Name</label>
+              <select class="form-control attNames" id="ddl_attName[]">
+                {% for att in possibleAtts %}
+                  <option value="{{ att }}">{{ att }}</option>
+                {% end %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="txt_attVal">Att Val</label>
+              <input type="text" class="form-control attVals" id="txt_attVal[]" placeholder="Att Value">
+            </div>
+          </div>
+          
+          <div class="col-md-2">
+          </div>
+        </div>
+
+        <div id="O_o"></div>
+
+        <div class="row">
+          <div class="col-md-2">
+          </div>
+          
+          <div class="col-md-8">
+            <div class="form-group">
+              <button class="btn btn-success" id="btn_setAttr">Set Attributes</button>
+              <button class="btn btn-primary" id="btn_setAdd">Add Another Attribute</button>
+              <button class="btn btn-danger" id="btn_setClear">Clear</button>
+            </div>
+
+          </div>
+          
+          <div class="col-md-2">
+          </div>
+        </div>
+
       
     </div>
   </div>
       <script src="{{ static_url("jquery-1.11.3.min.js") }}"></script>
 
       <script type="text/javascript">
-        var connection = new WebSocket('ws://{{ wsip }}');
-        connection.onmessage = function(e){
-          var server_message = e.data;
-          //console.log("RECV: " + server_message);
+        $(function() {
+          $('#btn_createClear').click(function() { window.location = window.location;});
+          $('#btn_setClear').click(function() { window.location = window.location;});
+          $('#btn_setAdd').click(function() { AddAttr(); });
+          $('#btn_setAttr').click(function() { 
+            var attNames = [];
+            var attVals = [];
+            $('.attNames').each(function() {
+                attNames.push($(this).val());
+            });
+            $('.attVals').each(function() {
+                attVals.push($(this).val());
+            });
 
+            var obj = {"TASK": "ATTR", "NAME": $("#txt_resName").val(), "ATTS":attNames, "VALS":attVals };
+            connection.send(JSON.stringify(obj));
+          });
+          $('#btn_createRes').click(function() { 
+            var obj = {"TASK": "CREATE", "NAME": $("#txt_resName").val(), "FAM": $("#ddl_resFamName").val(), "MOD": $("#ddl_resModName").val(), "ADDR": $("#txt_resAddres").val(), "DESC": $("#txt_resDescription").val()}
+            connection.send(JSON.stringify(obj));
+          });
+        });
+
+        function printMsg(msg){
           $(".alert").hide();
           
-          if (server_message.indexOf("FAILED") !== -1) {
+          if (msg.indexOf("FAILED") !== -1) {
             //alert(server_message);
-            $('#div_fail').html(server_message);
+            $('#div_fail').html(msg);
             $('#div_fail').show();
           }
           else {
-            $('#div_success').html(server_message);
+            $('#div_success').html(msg);
             $('#div_success').show();
           }
         }
-      </script>
 
-      <script type="text/javascript">
-        $(function() {
-          $('#btn_createRes').click(function() { 
-            var str = 'CREATE/' + $("#txt_resName").val() + "/"+ $("#ddl_resFamName").val() + "/"+ $("#ddl_resModName").val() + "/"+ $("#txt_resAddres").val() + "/"+ $("#txt_resDescription").val();
-            //console.log("SENDING: " + str);
-            connection.send(str);
-          });
-        });
+        function AddAttr() {
+          $('#dupRow').clone().appendTo('#O_o');
+        }
+
+        var connection = new WebSocket('ws://'+window.location.hostname+':'+{{wsip}});
+        connection.onmessage = function(e){
+          var server_message = e.data;
+          printMsg(server_message);
+          //console.log("RECV: " + server_message);       
+        }
       </script>
 </body>
 
