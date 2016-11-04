@@ -15,9 +15,19 @@ import socket
 import xml.etree.ElementTree as ET
 import sys
 
+class QSCreds():
+    def __init__(self):
+        self.Host = "localhost"
+        self.Un = "admin"
+        self.Pw = "admin"
+        self.Dom = "Global"
+        self.appWSHPort = 6661
+        self.appMainPort = 6660
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        csapi = CloudShellAPISession("localhost","admin","admin","Global")
+        creds = QSCreds()
+        csapi = CloudShellAPISession(creds.Host, creds.Un, creds.Pw, creds.Dom)
         fAM = csapi.ExportFamiliesAndModels()
         root = ET.fromstring(fAM.Configuration)
         ns = {"qs":"http://schemas.qualisystems.com/ResourceManagement/ExportImportConfigurationSchema.xsd"}
@@ -45,11 +55,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             modName = obj["MOD"]
             addr = obj["ADDR"]
             desc = obj["DESC"]
+            dom = obj["DOM"]
 
             if (len(resName) > 0):
                 try:
-                    csapi = CloudShellAPISession("localhost","admin","admin","Global")
-                    csapi.CreateResource(famName, modName, resName, addr, "", "", desc)
+                    creds = QSCreds()
+                    csapi = CloudShellAPISession(creds.Host, creds.Un, creds.Pw, creds.Dom)
+                    folder = ""
+                    parent = ""
+                    
+                    csapi.CreateResource(famName, modName, resName, addr, folder, parent, desc)
+                    csapi.AddResourcesToDomain(dom, [resName])
                     self.write_message("CREATED/"+message)
                 except:
                     e = sys.exc_info()[0]
@@ -62,15 +78,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
             if (len(resName) > 0):
                 try:
-                    csapi = CloudShellAPISession("localhost","admin","admin","Global")
+                    creds = QSCreds()
+                    csapi = CloudShellAPISession(creds.Host, creds.Un, creds.Pw, creds.Dom)
                     allRaud = []
                     
                     for n,v in zip(obj["ATTS"], obj["VALS"]):
-                        anv = AttributeNameValue(n,v)
-                        anvs = AttributeNamesValues(anv)
-                        raud = ResourceAttributesUpdateRequest(resName, anvs)
-                        allRaud.append(raud)
-                    csapi.SetAttributesValues(allRaud)
+                        if (n != "XXXNAXXX"):
+                            anv = AttributeNameValue(n,v)
+                            anvs = AttributeNamesValues(anv)
+                            raud = ResourceAttributesUpdateRequest(resName, anvs)
+                            allRaud.append(raud)
+                    	    csapi.SetAttributesValues(allRaud)
                     self.write_message("ATTR/"+message)
                 except:
                     e = sys.exc_info()[0]
@@ -78,6 +96,23 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                     pass
             else:
                 self.write_message("FAILED/ATTRNAME")
+        elif obj["TASK"] == "SUB":
+            rootName = obj["ROOT"]
+            if (len(rootName) > 0):
+                try:
+                    creds = QSCreds()
+                    csapi = CloudShellAPISession(creds.Host, creds.Un, creds.Pw, creds.Dom)
+
+                    for f,m,n in zip(obj["SUBFAMS"], obj["SUBMODS"],  obj["SUBNAMES"]):
+                        if (len(n) > 0):
+                            csapi.CreateResource(f, m, n, n, "", rootName, "")
+                    self.write_message("SUB/"+message)
+                except:
+                    e = sys.exc_info()[0]
+                    self.write_message("FAILED/EXCEPTION/"+str(e))
+                    pass
+            else:
+                self.write_message("FAILED/ROOTNAME")
         else:
             self.write_message("FAILED/UNKNOWN")
 
@@ -90,15 +125,16 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 class Runner():
     def __init__(self, printOutput=False):
-        appWSHPort = 6661
-        appMainPort = 6660
+        creds = QSCreds()
+        appWSHPort = creds.appWSHPort
+        appMainPort = creds.appMainPort
 
         # Start the websocket hander
         appWSH = tornado.web.Application([(r"/", WebSocketHandler),])
         appWSH.listen(appWSHPort)
 
         if printOutput:
-            csapi = CloudShellAPISession("localhost","admin","admin","Global")
+            csapi = CloudShellAPISession(creds.Host, creds.Un, creds.Pw, creds.Dom)
             csapi.WriteMessageToReservationOutput(context.reservation.reservation_id, "Head to: http://" +socket.gethostbyname(socket.gethostname())+":"+str(appMainPort))
 
         # start main app
@@ -124,18 +160,7 @@ class ResourcemakerDriver (ResourceDriverInterface):
         pass
 
     def RunResourceMaker(self, context, cancellation_context):
-
         r = Runner(True)
-
-        pass
-
-    def example_function_with_params(self, context, user_param1, user_param2):
-        """
-        An example function that accepts two user parameters
-        :param ResourceCommandContext context: the context the command runs on
-        :param str user_param1: A user parameter
-        :param str user_param2: A user parameter
-        """
         pass
 
 

@@ -66,6 +66,9 @@
 
     <div class="container marketing" >
 
+    <!-- Resource Well -->
+    <div class="well">
+
         <div class="row">
           <div class="col-md-2">
           </div>
@@ -89,9 +92,6 @@
         </div>
 
         <div class="row">
-          <div class="col-md-2">
-          </div>
-          
           <div class="col-md-4">
             <div class="form-group">
               <label for="resName">Family Name</label>
@@ -114,7 +114,17 @@
             </div>
           </div>
           
-          <div class="col-md-2">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="domName">Domain</label>
+              <select class="form-control" id="ddl_domain">
+                <option value="Austin">Austin</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="RTP">RTP</option>
+                <option value="San Jose">San Jose</option>
+                <option value="SJA">SJA</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -123,7 +133,7 @@
           </div>
           
           <div class="col-md-8">
-            <div class="form-group" style="display:none;">
+            <div class="form-group">
               <label for="resName">Description</label>
               <input type="text" class="form-control" id="txt_resDescription" placeholder="Description">
             </div>
@@ -134,10 +144,16 @@
             </div>
 
           </div>
-          
+
           <div class="col-md-2">
           </div>
         </div>
+
+        <!-- Resource Well -->
+        </div>
+
+        <!-- Attribute Well -->
+	<div class="well">
 
          <div class="row">
            <div class="col-md-2"></div>
@@ -148,6 +164,7 @@
            <div class="col-md-2"></div>
          </div>
 
+
         <div class="row" id="dupRow">
           <div class="col-md-2">
           </div>
@@ -156,6 +173,7 @@
             <div class="form-group">
               <label for="ddl_attName">Att Name</label>
               <select class="form-control attNames" id="ddl_attName[]">
+		            <option value="XXXNAXXX">No Other Attributes</option>
                 {% for att in possibleAtts %}
                   <option value="{{ att }}">{{ att }}</option>
                 {% end %}
@@ -182,8 +200,8 @@
           
           <div class="col-md-8">
             <div class="form-group">
-              <button class="btn btn-success" id="btn_setAttr">Set Attributes</button>
-              <button class="btn btn-primary" id="btn_setAdd">Add Another Attribute</button>
+              <button class="btn btn-success" id="btn_setAttr">Set Chassis Attributes</button>
+              <button class="btn btn-primary" id="btn_setAdd">Add Another Chassis Attribute</button>
               <button class="btn btn-danger" id="btn_setClear">Clear</button>
             </div>
 
@@ -193,6 +211,57 @@
           </div>
         </div>
 
+    <!-- Attribute Well -->
+    </div>
+
+
+    <!-- Sub Resource Well -->
+    <div class="well">
+
+	<div class="row" id="dupSub">
+          <div class="col-md-2">
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="ddl_subName">Sub Resource Type</label>
+              <select class="form-control subName" id="ddl_subName[]">
+                  <option value="mgmt">Second Management</option>
+                  <option value="gig">Gigabit Data</option>
+                  <option value="ten">Ten Gigabit Data</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="form-group">
+              <label for="txt_subValue">Sub Resource Name</label>
+              <input type="text" class="form-control subVal" id="txt_subVal[]" placeholder="Interface Name">
+            </div>
+          </div>
+
+          <div class="col-md-2">
+          </div>
+        </div>
+
+        <div id="O_oSub"></div>
+
+    	<div class="row">
+          <div class="col-md-2"></div>
+
+          <div class="col-md-8">
+            <div class="form-group">
+              <button class="btn btn-success" id="btn_subMake">Add Sub Resources</button>
+	      <button class="btn btn-primary" id="btn_subAdd">Add Another Sub Resource</button>
+              <button class="btn btn-danger" id="btn_subClear">Clear</button>
+            </div>
+
+          </div>
+
+          <div class="col-md-2"></div>
+        </div>
+    </div>
+    <!-- Sub Resource  Well -->
       
     </div>
   </div>
@@ -200,9 +269,14 @@
 
       <script type="text/javascript">
         $(function() {
+	  // buttons that clear everything
           $('#btn_createClear').click(function() { window.location = window.location;});
           $('#btn_setClear').click(function() { window.location = window.location;});
+	  $('#btn_subClear').click(function() { window.location = window.location;});
           $('#btn_setAdd').click(function() { AddAttr(); });
+	  $('#btn_subAdd').click(function() { AddSub(); });
+
+	  // assign attributes
           $('#btn_setAttr').click(function() { 
             var attNames = [];
             var attVals = [];
@@ -216,11 +290,39 @@
             var obj = {"TASK": "ATTR", "NAME": $("#txt_resName").val(), "ATTS":attNames, "VALS":attVals };
             connection.send(JSON.stringify(obj));
           });
+
+	  // create root resource
           $('#btn_createRes').click(function() { 
-            var obj = {"TASK": "CREATE", "NAME": $("#txt_resName").val(), "FAM": $("#ddl_resFamName").val(), "MOD": $("#ddl_resModName").val(), "ADDR": $("#txt_resAddres").val(), "DESC": $("#txt_resDescription").val()}
+            var obj = {"TASK": "CREATE", "NAME": $("#txt_resName").val(), "FAM": $("#ddl_resFamName").val(), "MOD": $("#ddl_resModName").val(), "ADDR": $("#txt_resAddres").val(), "DESC": $("#txt_resDescription").val(), "DOM": $("#ddl_domain").val()}
             connection.send(JSON.stringify(obj));
           });
         });
+
+	// create sub resource
+	$('#btn_subMake').click(function() {
+		var subTypes = [];
+		var subNames = [];
+		var subFams = [];
+		var subMods = [];
+		$('.subName').each(function() {
+                	subTypes.push($(this).val());
+			if ($(this).val() == "mgmt") { 
+				subFams.push("Firewall Ports");
+				subMods.push("Generic Firewall Management Port");
+			} else if ($(this).val() == "gig") {
+				subFams.push("Firewall Ports");
+                                subMods.push("Generic Firewall Port");
+			} else if ($(this).val() == "ten") {
+				subFams.push("SSP Interface");
+                                subMods.push("Interface");
+			} 
+            	});
+            	$('.subVal').each(function() {
+                	subNames.push($(this).val());
+            	});
+		var obj = {"TASK": "SUB", "ROOT": $("#txt_resName").val(), "SUBFAMS": subFams, "SUBMODS": subMods, "SUBNAMES": subNames };
+		connection.send(JSON.stringify(obj));
+	});
 
         function printMsg(msg){
           $(".alert").hide();
@@ -238,6 +340,10 @@
 
         function AddAttr() {
           $('#dupRow').clone().appendTo('#O_o');
+        }
+
+	 function AddSub() {
+          $('#dupSub').clone().appendTo('#O_oSub');
         }
 
         var connection = new WebSocket('ws://'+window.location.hostname+':'+{{wsip}});
